@@ -1,0 +1,10 @@
+{
+  "name": "spectre-browser",
+  "version": "1.0.0",
+  "description": "Spectre — Stealth Anti-Capture Safari-Style Cloth Window Browser for Windows",
+  "private": true,
+  "scripts": {
+    "dev": "echo \"No frontend build step needed (static UI in ./ui)\"",
+    "build": "echo \"Static UI ready in ./ui\""
+  }
+}

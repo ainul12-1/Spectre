@@ -1,0 +1,8 @@
+# Rust / Tauri build artifacts
+src-tauri/target/
+src-tauri/WixTools/
+node_modules/
+dist/
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,757 @@
+:root {
+  --glass-bg: rgba(24, 25, 34, 0.92);
+  --glass-header: rgba(34, 36, 48, 0.95);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-highlight: rgba(255, 255, 255, 0.07);
+  --text-main: #f3f4f8;
+  --text-muted: #9ba1b6;
+  --accent: #6e6aff;
+  --accent-glow: rgba(110, 106, 255, 0.35);
+  --emerald: #2CE59B;
+  --danger: #ff5f57;
+  --warning: #febc2e;
+  --success: #28c840;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html,
+body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: transparent !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  color: var(--text-main);
+}
+
+.svg-filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Ruang transparan di sekeliling Safari Window agar saat melengkung kaya kain tidak kepotong */
+.cloth-stage {
+  width: 100vw;
+  height: 100vh;
+  padding: 26px;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  perspective: 1100px;
+  background: transparent;
+}
+
+.safari-shell {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--glass-bg);
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+  overflow: hidden;
+  transform-origin: 50% 0%;
+  will-change: transform, border-radius, box-shadow, opacity, filter;
+  animation: clothEntrance 0.48s cubic-bezier(0.22, 1.35, 0.36, 1) forwards;
+}
+
+@keyframes clothEntrance {
+  0% {
+    opacity: 0;
+    transform: perspective(1000px) scale(0.84) translateY(24px) rotateX(-12deg) skewX(6deg);
+  }
+  65% {
+    opacity: 1;
+    transform: perspective(1000px) scale(1.015) translateY(-3px) rotateX(2deg) skewX(-1.5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(1000px) scale(1) translateY(0) rotateX(0deg) skewX(0deg);
+  }
+}
+
+/* Animasi Saat Tombol Bulat Merah (Close) Diklik - Melipat seperti Kain & Tersedot */
+.safari-shell.is-closing {
+  pointer-events: none;
+  transition:
+    transform 0.38s cubic-bezier(0.55, -0.25, 0.7, 0.4),
+    opacity 0.36s ease-in,
+    border-radius 0.38s ease !important;
+  transform: perspective(900px) translateY(110px) scaleX(0.25) scaleY(0.08) rotateX(36deg) skewX(-18deg) !important;
+  border-radius: 48px !important;
+  opacity: 0 !important;
+}
+
+/* Animasi Saat Tombol Bulat Kuning (Minimize) Diklik */
+.safari-shell.is-minimizing {
+  pointer-events: none;
+  transition:
+    transform 0.34s cubic-bezier(0.5, -0.2, 0.7, 0.35),
+    opacity 0.32s ease !important;
+  transform: perspective(900px) translateY(220px) scaleX(0.35) scaleY(0.15) rotateX(-25deg) skewX(12deg) !important;
+  opacity: 0 !important;
+}
+
+/* ================= HEADER SAFARI ================= */
+.safari-header {
+  height: 50px;
+  min-height: 50px;
+  background: linear-gradient(180deg, rgba(46, 49, 66, 0.96) 0%, var(--glass-header) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  gap: 12px;
+  cursor: grab;
+}
+
+.safari-header:active {
+  cursor: grabbing;
+}
+
+.header-left,
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Traffic Lights (3 Tombol Bulat Warna macOS Safari) */
+.traffic-lights {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 4px 2px;
+}
+
+.traffic-btn {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.traffic-btn.close {
+  background: var(--danger);
+}
+
+.traffic-btn.minimize {
+  background: var(--warning);
+}
+
+.traffic-btn.maximize {
+  background: var(--success);
+}
+
+.traffic-btn svg {
+  width: 8px;
+  height: 8px;
+  stroke: rgba(30, 10, 10, 0.85);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  fill: none;
+  opacity: 0;
+  transition: opacity 0.14s ease;
+}
+
+.traffic-lights:hover .traffic-btn svg {
+  opacity: 1;
+}
+
+.traffic-btn:hover {
+  transform: scale(1.14);
+  filter: brightness(1.08);
+}
+
+.traffic-btn:active {
+  transform: scale(0.92);
+}
+
+/* Tombol Navigasi Safari */
+.nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.icon-btn {
+  width: 30px;
+  height: 28px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--text-main);
+}
+
+.icon-btn:active {
+  transform: scale(0.92);
+}
+
+.icon-btn svg {
+  width: 17px;
+  height: 17px;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+/* Address Bar Tengah Ala Safari */
+.header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  max-width: 580px;
+  margin: 0 auto;
+}
+
+.address-bar {
+  width: 100%;
+  height: 32px;
+  background: rgba(15, 16, 23, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px 0 10px;
+  gap: 8px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.address-bar:focus-within {
+  background: rgba(12, 13, 20, 0.94);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.security-icon {
+  display: flex;
+  align-items: center;
+  color: var(--emerald);
+}
+
+.security-icon svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+}
+
+#address-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-main);
+  font-size: 13px;
+  text-align: center;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+#address-input:focus {
+  text-align: left;
+}
+
+#address-input::placeholder {
+  color: rgba(155, 161, 182, 0.65);
+}
+
+.address-action {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.address-action:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.address-action svg {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Badge Status Anti-SS */
+.stealth-pill {
+  height: 27px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(44, 229, 155, 0.35);
+  background: rgba(44, 229, 155, 0.12);
+  color: #72f6c1;
+  font-size: 11.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stealth-pill:hover {
+  background: rgba(44, 229, 155, 0.2);
+  transform: translateY(-1px);
+}
+
+.stealth-pill .stealth-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--emerald);
+  box-shadow: 0 0 8px var(--emerald);
+}
+
+.stealth-pill.off {
+  border-color: rgba(255, 95, 87, 0.4);
+  background: rgba(255, 95, 87, 0.13);
+  color: #ff948f;
+}
+
+.stealth-pill.off .stealth-dot {
+  background: var(--danger);
+  box-shadow: 0 0 8px var(--danger);
+}
+
+/* ================= BARIS TAB SAFARI ================= */
+.tab-bar {
+  height: 36px;
+  min-height: 36px;
+  background: rgba(20, 21, 30, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 8px;
+  cursor: grab;
+}
+
+.tab-bar:active {
+  cursor: grabbing;
+}
+
+.tab-list {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  max-width: 72%;
+  scrollbar-width: none;
+}
+
+.tab-list::-webkit-scrollbar {
+  display: none;
+}
+
+.safari-tab {
+  height: 26px;
+  min-width: 120px;
+  max-width: 200px;
+  padding: 0 8px 0 10px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.safari-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+}
+
+.safari-tab.active {
+  background: rgba(110, 106, 255, 0.2);
+  border-color: rgba(110, 106, 255, 0.45);
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.tab-close {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.65;
+}
+
+.tab-close:hover {
+  opacity: 1;
+  background: rgba(255, 95, 87, 0.28);
+  color: #ffb4b0;
+}
+
+.tab-drag-spacer {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 6px;
+  font-size: 11px;
+  color: rgba(155, 161, 182, 0.55);
+  pointer-events: none;
+}
+
+/* ================= POPOVER PENGATURAN ================= */
+.settings-popover {
+  position: absolute;
+  top: 56px;
+  right: 16px;
+  width: 300px;
+  background: rgba(26, 28, 40, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  padding: 15px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+  z-index: 100;
+  backdrop-filter: blur(18px);
+}
+
+.settings-popover.hidden {
+  display: none;
+}
+
+.popover-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #fff;
+  letter-spacing: 0.2px;
+}
+
+.setting-row {
+  margin-bottom: 12px;
+}
+
+.setting-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+
+.setting-badge {
+  color: var(--emerald);
+  font-weight: 600;
+}
+
+.setting-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  padding-top: 4px;
+}
+
+.popover-note {
+  margin-top: 10px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  background: rgba(110, 106, 255, 0.12);
+  border: 1px solid rgba(110, 106, 255, 0.25);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #d4d7e8;
+}
+
+/* ================= VIEWPORT & START PAGE ================= */
+.viewport-area {
+  position: relative;
+  flex: 1;
+  background: #12131c;
+  overflow: hidden;
+  display: flex;
+}
+
+.start-page {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(110, 106, 255, 0.16), transparent 45%),
+    radial-gradient(circle at 80% 75%, rgba(44, 229, 155, 0.12), transparent 45%),
+    #11121a;
+}
+
+.start-page.hidden {
+  display: none;
+}
+
+.start-hero {
+  max-width: 660px;
+  width: 100%;
+  text-align: center;
+}
+
+.spectre-logo-orb {
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 14px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #6e6aff 0%, #2ce59b 100%);
+  box-shadow: 0 10px 30px rgba(110, 106, 255, 0.45);
+  position: relative;
+}
+
+.spectre-logo-orb::after {
+  content: "👻";
+  font-size: 30px;
+  line-height: 62px;
+}
+
+.start-hero h1 {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  margin-bottom: 22px;
+}
+
+.hero-search {
+  display: flex;
+  gap: 8px;
+  max-width: 520px;
+  margin: 0 auto 24px;
+}
+
+.hero-search input {
+  flex: 1;
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.hero-search input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.hero-search button {
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 12px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.12s ease;
+}
+
+.hero-search button:hover {
+  filter: brightness(1.12);
+}
+
+.quick-links {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.quick-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.quick-card:hover {
+  background: rgba(110, 106, 255, 0.18);
+  border-color: rgba(110, 106, 255, 0.45);
+  transform: translateY(-2px);
+}
+
+.q-icon {
+  font-size: 20px;
+}
+
+.q-title {
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.status-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  text-align: left;
+}
+
+.status-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.sc-header {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #fff;
+}
+
+.status-card p {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.status-card code {
+  color: var(--emerald);
+  background: rgba(44, 229, 155, 0.12);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+/* Container Iframes */
+.iframes-container {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.iframes-container.hidden {
+  display: none;
+}
+
+.browser-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #ffffff;
+  display: none;
+}
+
+.browser-iframe.active {
+  display: block;
+}
+
+.drag-shield {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: transparent;
+  cursor: grabbing;
+}
+
+.drag-shield.hidden {
+  display: none;
+}
+
+.resize-handle {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  z-index: 80;
+  background: linear-gradient(
+    135deg,
+    transparent 50%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.25) 65%,
+    transparent 65%,
+    transparent 80%,
+    rgba(255, 255, 255, 0.4) 80%
+  );
+  border-bottom-right-radius: 12px;
+}
