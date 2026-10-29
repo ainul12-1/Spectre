@@ -23,6 +23,32 @@ extern "system" {
     fn GetAncestor(hwnd: isize, ga_flags: u32) -> isize;
     fn ReleaseCapture() -> i32;
     fn SendMessageW(hwnd: isize, msg: u32, wparam: usize, lparam: isize) -> isize;
+    fn SetWindowRgn(hwnd: isize, hrgn: isize, b_redraw: i32) -> i32;
+    fn GetWindowRect(hwnd: isize, lp_rect: *mut [i32; 4]) -> i32;
+}
+
+#[cfg(target_os = "windows")]
+#[link(name = "dwmapi")]
+extern "system" {
+    fn DwmSetWindowAttribute(
+        hwnd: isize,
+        dw_attribute: u32,
+        pv_attribute: *const std::ffi::c_void,
+        cb_attribute: u32,
+    ) -> i32;
+}
+
+#[cfg(target_os = "windows")]
+#[link(name = "gdi32")]
+extern "system" {
+    fn CreateRoundRectRgn(
+        x1: i32,
+        y1: i32,
+        x2: i32,
+        y2: i32,
+        w: i32,
+        h: i32,
+    ) -> isize;
 }
 
 #[cfg(target_os = "windows")]
@@ -39,6 +65,42 @@ const SWP_NOZORDER: u32 = 0x0004;
 const SWP_FRAMECHANGED: u32 = 0x0020;
 #[cfg(target_os = "windows")]
 const GA_ROOT: u32 = 2;
+
+#[cfg(target_os = "windows")]
+fn apply_rounded_corners(hwnd: isize) {
+    let top_hwnd = unsafe {
+        let root = GetAncestor(hwnd, GA_ROOT);
+        if root != 0 {
+            root
+        } else {
+            hwnd
+        }
+    };
+
+    unsafe {
+        // 1. Windows 11 DWM rounded corners (DWMWCP_ROUND)
+        let round_preference: u32 = 2;
+        let _ = DwmSetWindowAttribute(
+            top_hwnd,
+            33, // DWMWA_WINDOW_CORNER_PREFERENCE
+            &round_preference as *const _ as *const std::ffi::c_void,
+            4,
+        );
+
+        // 2. Win32 GDI Rounded Region (22px curvature)
+        let mut rect = [0i32; 4];
+        if GetWindowRect(top_hwnd, rect.as_mut_ptr()) != 0 {
+            let width = rect[2] - rect[0];
+            let height = rect[3] - rect[1];
+            if width > 0 && height > 0 {
+                let rgn = CreateRoundRectRgn(0, 0, width + 1, height + 1, 22, 22);
+                if rgn != 0 {
+                    let _ = SetWindowRgn(top_hwnd, rgn, 1);
+                }
+            }
+        }
+    }
+}
 
 #[cfg(target_os = "windows")]
 fn apply_stealth_mode(hwnd: isize, enabled: bool) {
@@ -100,10 +162,10 @@ fn set_always_on_top(window: Window, enabled: bool) -> Result<bool, String> {
 
 const INJECTED_SAFARI_HEADER_JS: &str = r#"
 (function() {
-  if (window.__spectre_injected) return;
-  window.__spectre_injected = true;
+  if (window.__spectre_injected_ready) return;
+  window.__spectre_injected_ready = true;
 
-  if (window.location.hostname === 'tauri.localhost' && (window.location.pathname === '/' || window.location.pathname === '/index.html')) {
+  if (window.location.protocol === 'tauri:' || (window.location.hostname === 'tauri.localhost' || window.location.hostname === 'localhost') && (window.location.pathname === '/' || window.location.pathname === '/index.html')) {
     return;
   }
 
@@ -115,74 +177,74 @@ const INJECTED_SAFARI_HEADER_JS: &str = r#"
     } catch(e) {}
   }
 
-  function injectSafariHeader() {
-    if (document.getElementById('__spectre_toolbar')) return;
+  function ensureHeader() {
+    if (document.getElementById('__spectre_root')) {
+      var addr = document.getElementById('__spectre_addr_input');
+      if (addr && document.activeElement !== addr && addr.value !== window.location.href) {
+        addr.value = window.location.href;
+      }
+      return;
+    }
 
-    var style = document.createElement('style');
-    style.id = '__spectre_style';
-    style.textContent = '' +
-      '#__spectre_toolbar {' +
-      '  position: fixed !important;' +
-      '  top: 0 !important;' +
-      '  left: 0 !important;' +
-      '  width: 100vw !important;' +
-      '  height: 44px !important;' +
-      '  background: rgba(30, 31, 42, 0.95) !important;' +
-      '  backdrop-filter: blur(20px) !important;' +
-      '  -webkit-backdrop-filter: blur(20px) !important;' +
-      '  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;' +
-      '  display: flex !important;' +
-      '  align-items: center !important;' +
-      '  justify-content: space-between !important;' +
-      '  padding: 0 14px !important;' +
-      '  z-index: 2147483647 !important;' +
-      '  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;' +
-      '  box-sizing: border-box !important;' +
-      '  user-select: none !important;' +
-      '  -webkit-user-select: none !important;' +
-      '  color: #fff !important;' +
-      '  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4) !important;' +
-      '}' +
-      '#__spectre_toolbar * { box-sizing: border-box !important; }' +
-      'html, body { margin-top: 44px !important; }';
-    (document.head || document.documentElement).appendChild(style);
+    if (!document.body && !document.documentElement) return;
+
+    var root = document.createElement('div');
+    root.id = '__spectre_root';
+    root.style.cssText = 'position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:44px!important;z-index:2147483647!important;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif!important;box-sizing:border-box!important;user-select:none!important;-webkit-user-select:none!important;pointer-events:auto!important;';
 
     var bar = document.createElement('div');
-    bar.id = '__spectre_toolbar';
+    bar.style.cssText = 'width:100%!important;height:100%!important;background:#1e1f29!important;border-bottom:1px solid rgba(255,255,255,0.12)!important;display:flex!important;align-items:center!important;justify-content:space-between!important;padding:0 14px!important;box-sizing:border-box!important;color:#fff!important;box-shadow:0 2px 10px rgba(0,0,0,0.5)!important;';
 
-    bar.innerHTML = '' +
-      '<div style="display:flex;align-items:center;gap:12px;">' +
-      '  <div style="display:flex;align-items:center;gap:8px;padding-right:6px;">' +
-      '    <div id="__sp_close" title="Tutup Window" style="width:12px;height:12px;border-radius:50%;background:#ff5f57;cursor:pointer;box-shadow:inset 0 1px 1px rgba(255,255,255,0.4),0 1px 2px rgba(0,0,0,0.35);"></div>' +
-      '    <div id="__sp_min" title="Kecilkan Window" style="width:12px;height:12px;border-radius:50%;background:#febc2e;cursor:pointer;box-shadow:inset 0 1px 1px rgba(255,255,255,0.4),0 1px 2px rgba(0,0,0,0.35);"></div>' +
-      '    <div id="__sp_max" title="Perbesar Window" style="width:12px;height:12px;border-radius:50%;background:#28c840;cursor:pointer;box-shadow:inset 0 1px 1px rgba(255,255,255,0.4),0 1px 2px rgba(0,0,0,0.35);"></div>' +
-      '  </div>' +
-      '  <button id="__sp_back" title="Kembali" style="width:28px;height:26px;border-radius:6px;border:none;background:rgba(255,255,255,0.08);color:#fff;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;">‹</button>' +
-      '  <button id="__sp_fwd" title="Maju" style="width:28px;height:26px;border-radius:6px;border:none;background:rgba(255,255,255,0.08);color:#fff;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;">›</button>' +
-      '  <button id="__sp_home" title="Halaman Awal" style="width:28px;height:26px;border-radius:6px;border:none;background:rgba(255,255,255,0.08);color:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">🏠</button>' +
-      '</div>' +
-      '<form id="__sp_form" style="flex:1;max-width:580px;margin:0 14px;display:flex;align-items:center;">' +
-      '  <input id="__sp_addr" type="text" value="' + window.location.href + '" style="width:100%;height:30px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.14);border-radius:8px;color:#fff;font-size:12.5px;padding:0 12px;outline:none;text-align:center;" />' +
-      '</form>' +
-      '<div style="display:flex;align-items:center;gap:10px;">' +
-      '  <div id="__sp_stealth" title="Status Anti-Screenshot" style="height:26px;padding:0 10px;border-radius:999px;border:1px solid rgba(40,200,64,0.35);background:rgba(40,200,64,0.15);color:#4cd964;font-size:11px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer;">' +
-      '    <span style="width:6px;height:6px;border-radius:50%;background:#28c840;box-shadow:0 0 6px #28c840;"></span>' +
-      '    <span id="__sp_stealth_lbl">Anti-SS: ON</span>' +
-      '  </div>' +
-      '</div>';
+    var leftBox = document.createElement('div');
+    leftBox.style.cssText = 'display:flex;align-items:center;gap:10px;';
 
-    document.documentElement.appendChild(bar);
+    var tlBox = document.createElement('div');
+    tlBox.style.cssText = 'display:flex;align-items:center;gap:8px;padding-right:6px;';
 
-    document.getElementById('__sp_close').onclick = function() { sendCmd('close'); };
-    document.getElementById('__sp_min').onclick = function() { sendCmd('minimize'); };
-    document.getElementById('__sp_max').onclick = function() { sendCmd('maximize'); };
-    document.getElementById('__sp_back').onclick = function() { window.history.back(); };
-    document.getElementById('__sp_fwd').onclick = function() { window.history.forward(); };
-    document.getElementById('__sp_home').onclick = function() { window.location.href = 'https://tauri.localhost/'; };
+    var btnClose = document.createElement('div');
+    btnClose.title = 'Tutup';
+    btnClose.style.cssText = 'width:12px;height:12px;border-radius:50%;background:#ff5f57;cursor:pointer;box-shadow:inset 0 1px 1px rgba(255,255,255,0.4),0 1px 2px rgba(0,0,0,0.4);';
+    btnClose.onclick = function(e) { e.stopPropagation(); sendCmd('close'); };
 
-    document.getElementById('__sp_form').onsubmit = function(e) {
+    var btnMin = document.createElement('div');
+    btnMin.title = 'Kecilkan';
+    btnMin.style.cssText = 'width:12px;height:12px;border-radius:50%;background:#febc2e;cursor:pointer;box-shadow:inset 0 1px 1px rgba(255,255,255,0.4),0 1px 2px rgba(0,0,0,0.4);';
+    btnMin.onclick = function(e) { e.stopPropagation(); sendCmd('minimize'); };
+
+    var btnMax = document.createElement('div');
+    btnMax.title = 'Perbesar';
+    btnMax.style.cssText = 'width:12px;height:12px;border-radius:50%;background:#28c840;cursor:pointer;box-shadow:inset 0 1px 1px rgba(255,255,255,0.4),0 1px 2px rgba(0,0,0,0.4);';
+    btnMax.onclick = function(e) { e.stopPropagation(); sendCmd('maximize'); };
+
+    tlBox.appendChild(btnClose);
+    tlBox.appendChild(btnMin);
+    tlBox.appendChild(btnMax);
+    leftBox.appendChild(tlBox);
+
+    function makeBtn(txt, title, onClick) {
+      var b = document.createElement('button');
+      b.textContent = txt;
+      b.title = title;
+      b.style.cssText = 'width:28px;height:26px;border-radius:6px;border:none;background:rgba(255,255,255,0.08);color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;padding:0;outline:none;';
+      b.onclick = function(e) { e.stopPropagation(); onClick(); };
+      return b;
+    }
+
+    leftBox.appendChild(makeBtn('‹', 'Kembali', function() { window.history.back(); }));
+    leftBox.appendChild(makeBtn('›', 'Maju', function() { window.history.forward(); }));
+    leftBox.appendChild(makeBtn('🏠', 'Halaman Awal', function() { window.location.href = 'https://tauri.localhost/'; }));
+    bar.appendChild(leftBox);
+
+    var form = document.createElement('form');
+    form.style.cssText = 'flex:1;max-width:580px;margin:0 14px;display:flex;align-items:center;';
+    var inp = document.createElement('input');
+    inp.id = '__spectre_addr_input';
+    inp.type = 'text';
+    inp.value = window.location.href;
+    inp.style.cssText = 'width:100%;height:30px;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;font-size:12.5px;padding:0 12px;outline:none;text-align:center;box-sizing:border-box;';
+    form.onsubmit = function(e) {
       e.preventDefault();
-      var val = document.getElementById('__sp_addr').value.trim();
+      var val = inp.value.trim();
       if (!val) return;
       if (/^https?:\/\//i.test(val)) {
         window.location.href = val;
@@ -192,31 +254,58 @@ const INJECTED_SAFARI_HEADER_JS: &str = r#"
         window.location.href = 'https://www.google.com/search?q=' + encodeURIComponent(val);
       }
     };
+    form.appendChild(inp);
+    bar.appendChild(form);
+
+    var rightBox = document.createElement('div');
+    rightBox.style.cssText = 'display:flex;align-items:center;gap:10px;';
+
+    var btnStealth = document.createElement('div');
+    btnStealth.title = 'Status Anti-Screenshot';
+    btnStealth.style.cssText = 'height:26px;padding:0 10px;border-radius:999px;border:1px solid rgba(40,200,64,0.35);background:rgba(40,200,64,0.15);color:#4cd964;font-size:11px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer;';
+    
+    var dot = document.createElement('span');
+    dot.style.cssText = 'width:6px;height:6px;border-radius:50%;background:#28c840;box-shadow:0 0 6px #28c840;';
+    var lbl = document.createElement('span');
+    lbl.textContent = 'Anti-SS: ON';
+
+    btnStealth.appendChild(dot);
+    btnStealth.appendChild(lbl);
 
     var stealthOn = true;
-    var btnSt = document.getElementById('__sp_stealth');
-    var lblSt = document.getElementById('__sp_stealth_lbl');
-    btnSt.onclick = function() {
+    btnStealth.onclick = function(e) {
+      e.stopPropagation();
       stealthOn = !stealthOn;
       sendCmd('toggle-stealth');
-      lblSt.textContent = stealthOn ? 'Anti-SS: ON' : 'Anti-SS: OFF';
-      btnSt.style.borderColor = stealthOn ? 'rgba(40,200,64,0.35)' : 'rgba(255,95,87,0.35)';
-      btnSt.style.background = stealthOn ? 'rgba(40,200,64,0.15)' : 'rgba(255,95,87,0.15)';
-      btnSt.style.color = stealthOn ? '#4cd964' : '#ff6b64';
+      lbl.textContent = stealthOn ? 'Anti-SS: ON' : 'Anti-SS: OFF';
+      btnStealth.style.borderColor = stealthOn ? 'rgba(40,200,64,0.35)' : 'rgba(255,95,87,0.35)';
+      btnStealth.style.background = stealthOn ? 'rgba(40,200,64,0.15)' : 'rgba(255,95,87,0.15)';
+      btnStealth.style.color = stealthOn ? '#4cd964' : '#ff6b64';
+      dot.style.background = stealthOn ? '#28c840' : '#ff5f57';
+      dot.style.boxShadow = stealthOn ? '0 0 6px #28c840' : '0 0 6px #ff5f57';
     };
+    rightBox.appendChild(btnStealth);
+    bar.appendChild(rightBox);
 
     bar.onmousedown = function(e) {
-      if (e.button === 0 && !e.target.closest('input, button, form, #__sp_close, #__sp_min, #__sp_max, #__sp_stealth')) {
+      if (e.button === 0 && !e.target.closest('input, button, form, div[title]')) {
         sendCmd('drag');
       }
     };
+
+    root.appendChild(bar);
+    (document.body || document.documentElement).appendChild(root);
+
+    var style = document.createElement('style');
+    style.id = '__spectre_page_offset';
+    style.textContent = 'html, body { padding-top: 44px !important; } #masthead-container { top: 44px !important; } ytd-app { margin-top: 44px !important; }';
+    (document.head || document.documentElement).appendChild(style);
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', injectSafariHeader);
-  } else {
-    injectSafariHeader();
+  if (document.body || document.documentElement) {
+    ensureHeader();
   }
+  setInterval(ensureHeader, 500);
 })();
 "#;
 
@@ -295,7 +384,18 @@ fn main() {
                 #[cfg(target_os = "windows")]
                 {
                     if let Ok(hwnd) = win_clone.hwnd() {
+                        apply_rounded_corners(hwnd.0 as isize);
                         apply_stealth_mode(hwnd.0 as isize, true);
+                    }
+                }
+            });
+
+            let win_event = window.clone();
+            window.on_window_event(move |event| {
+                if let tauri::WindowEvent::Resized(_) = event {
+                    #[cfg(target_os = "windows")]
+                    if let Ok(hwnd) = win_event.hwnd() {
+                        apply_rounded_corners(hwnd.0 as isize);
                     }
                 }
             });

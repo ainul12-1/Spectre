@@ -57,6 +57,7 @@ jobs:
 
           # Portable single EXE
           if (Test-Path "src-tauri\target\release\spectre.exe") {
+            Copy-Item "src-tauri\target\release\spectre.exe" "./dist-artifacts/Spectre.exe" -Force
             Copy-Item "src-tauri\target\release\spectre.exe" "./dist-artifacts/Spectre-Portable.exe" -Force
           }
 

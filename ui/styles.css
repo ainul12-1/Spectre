@@ -29,9 +29,10 @@ body {
   background: var(--bg-dark);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
   color: var(--text-primary);
+  border-radius: 16px;
 }
 
-/* App Container - 100% Full Bleed (Tanpa Margin / Tanpa Dobel Frame) */
+/* App Container - 100% Full Bleed dengan Sudut Melengkung */
 .app-container {
   width: 100vw;
   height: 100vh;
@@ -39,6 +40,8 @@ body {
   flex-direction: column;
   background: var(--bg-dark);
   overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   transition: transform 0.22s ease-out, opacity 0.2s ease-out;
 }
 
@@ -58,8 +61,8 @@ body {
 
 /* ================= 1. HEADER / TOOLBAR SAFARI ================= */
 .safari-toolbar {
-  height: 52px;
-  min-height: 52px;
+  height: 48px;
+  min-height: 48px;
   background: var(--bg-header);
   border-bottom: 1px solid var(--border-color);
   display: flex;
@@ -68,6 +71,8 @@ body {
   padding: 0 16px;
   gap: 14px;
   cursor: grab;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
 }
 
 .safari-toolbar:active {
@@ -276,114 +281,15 @@ body {
   box-shadow: 0 0 8px var(--red);
 }
 
-/* ================= 2. TAB BAR SAFARI ================= */
-.safari-tab-bar {
-  height: 38px;
-  min-height: 38px;
-  background: #1b1c26;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  gap: 8px;
-  cursor: grab;
-}
-
-.safari-tab-bar:active {
-  cursor: grabbing;
-}
-
-.tab-list {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  overflow-x: auto;
-  max-width: 80%;
-  scrollbar-width: none;
-}
-
-.tab-list::-webkit-scrollbar {
-  display: none;
-}
-
-.tab-item {
-  height: 28px;
-  min-width: 130px;
-  max-width: 210px;
-  padding: 0 10px;
-  border-radius: 7px;
-  background: var(--bg-tab-inactive);
-  border: 1px solid transparent;
-  color: var(--text-secondary);
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.tab-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary);
-}
-
-.tab-item.active {
-  background: var(--bg-tab-active);
-  border-color: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  font-weight: 500;
-}
-
-.tab-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-}
-
-.tab-close {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font-size: 13px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  opacity: 0.6;
-}
-
-.tab-close:hover {
-  opacity: 1;
-  background: rgba(255, 95, 87, 0.25);
-  color: #ff918b;
-}
-
-/* ================= 3. VIEWPORT / BROWSER CONTENT ================= */
+/* ================= 2. VIEWPORT / BROWSER CONTENT ================= */
 .viewport-content {
   flex: 1;
   position: relative;
-  background: #ffffff;
+  background: #181923;
   overflow: hidden;
   display: flex;
-}
-
-.browser-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  background: #ffffff;
-  display: none;
-}
-
-.browser-iframe.active {
-  display: block;
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
 }
 
 /* Start Page Default */
@@ -399,10 +305,8 @@ body {
   padding: 30px;
   color: #fff;
   overflow-y: auto;
-}
-
-.start-page.hidden {
-  display: none;
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
 }
 
 .start-card {
