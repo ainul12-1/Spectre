@@ -128,4 +128,11 @@
   btnForward.addEventListener("click", () => window.history.forward());
   btnHome.addEventListener("click", () => window.location.href = "https://tauri.localhost/");
   btnReload.addEventListener("click", () => window.location.reload());
+
+  const btnNewTab = document.getElementById("btn-new-tab");
+  if (btnNewTab) {
+    btnNewTab.addEventListener("click", () => {
+      window.location.href = "https://tauri.localhost/";
+    });
+  }
 })();

@@ -9,10 +9,10 @@
 <body>
   <div id="app" class="app-container">
     
-    <!-- Toolbar Safari macOS Header -->
+    <!-- 1. Toolbar Safari macOS Asli (Header Atas Lengkap) -->
     <header id="toolbar" class="safari-toolbar">
       
-      <!-- Kiri: Traffic Lights (Bulat Merah, Kuning, Hijau) + Tombol Navigasi -->
+      <!-- Kiri: Traffic Lights (Bulat Merah, Kuning, Hijau) + Tombol Navigasi Lengkap -->
       <div class="toolbar-left">
         <div class="traffic-lights">
           <button id="btn-close" class="traffic-dot close" title="Tutup Window (Close)" aria-label="Close">
@@ -27,19 +27,22 @@
         </div>
 
         <div class="nav-actions">
-          <button id="btn-back" class="btn-icon" title="Kembali">
+          <button id="btn-back" class="btn-icon" title="Kembali (Back)">
             <svg viewBox="0 0 20 20"><path d="M12.5 4.5L7 10l5.5 5.5" /></svg>
           </button>
-          <button id="btn-forward" class="btn-icon" title="Maju">
+          <button id="btn-forward" class="btn-icon" title="Maju (Forward)">
             <svg viewBox="0 0 20 20"><path d="M7.5 4.5L13 10l-5.5 5.5" /></svg>
           </button>
-          <button id="btn-home" class="btn-icon" title="Halaman Awal">
+          <button id="btn-reload" class="btn-icon" title="Muat Ulang (Reload)">
+            <svg viewBox="0 0 16 16"><path d="M13.5 8a5.5 5.5 0 1 1-1.4-3.7M13.5 2.5v2.3h-2.3" /></svg>
+          </button>
+          <button id="btn-home" class="btn-icon" title="Halaman Awal (Home)">
             <svg viewBox="0 0 20 20"><path d="M3.5 9.5L10 4l6.5 5.5M5.5 8.5V15.5h9V8.5" /></svg>
           </button>
         </div>
       </div>
 
-      <!-- Tengah: Address Bar Safari -->
+      <!-- Tengah: Address Bar Safari Lengkap -->
       <div class="toolbar-center">
         <form id="address-form" class="safari-address-bar" autocomplete="off">
           <span class="lock-badge">
@@ -50,27 +53,35 @@
           <input
             id="address-input"
             type="text"
-            placeholder="Cari atau ketik nama situs web..."
+            placeholder="Cari Google atau ketik nama situs web..."
             spellcheck="false"
           />
-          <button type="button" id="btn-reload" class="btn-icon" title="Muat Ulang">
-            <svg viewBox="0 0 16 16">
-              <path d="M13.5 8a5.5 5.5 0 1 1-1.4-3.7M13.5 2.5v2.3h-2.3" />
-            </svg>
-          </button>
         </form>
       </div>
 
-      <!-- Kanan: Tombol Anti-SS -->
+      <!-- Kanan: Tombol Anti-SS & Tambah Tab -->
       <div class="toolbar-right">
         <button id="btn-stealth" class="stealth-status-badge" title="Klik untuk mengaktifkan/mematikan Anti-Screenshot">
           <span class="dot"></span>
           <span id="stealth-text">Anti-SS: ON</span>
         </button>
+
+        <button id="btn-new-tab" class="btn-icon" title="Tab Baru (Ctrl+T)">
+          <svg viewBox="0 0 20 20"><path d="M10 4.5v11M4.5 10h11" /></svg>
+        </button>
       </div>
     </header>
 
-    <!-- Viewport (Start Page) -->
+    <!-- 2. Baris Multi-Tab Safari -->
+    <div id="tab-bar" class="safari-tab-bar">
+      <div id="tab-list" class="tab-list">
+        <div class="tab-item active" id="tab-home">
+          <span class="tab-title">👻 Spectre Start</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Viewport (Start Page) -->
     <main id="viewport" class="viewport-content">
       <div id="start-page" class="start-page">
         <div class="start-card">

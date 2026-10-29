@@ -281,7 +281,44 @@ body {
   box-shadow: 0 0 8px var(--red);
 }
 
-/* ================= 2. VIEWPORT / BROWSER CONTENT ================= */
+/* ================= 2. TAB BAR SAFARI ================= */
+.safari-tab-bar {
+  height: 36px;
+  min-height: 36px;
+  background: #1e1f29;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+}
+
+.tab-list {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tab-item {
+  height: 28px;
+  padding: 0 14px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tab-item.active {
+  background: rgba(94, 92, 230, 0.25);
+  border-color: rgba(94, 92, 230, 0.5);
+}
+
+/* ================= 3. VIEWPORT / BROWSER CONTENT ================= */
 .viewport-content {
   flex: 1;
   position: relative;
