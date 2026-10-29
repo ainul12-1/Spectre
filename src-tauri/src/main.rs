@@ -9,17 +9,6 @@ use tauri::{Manager, Window};
 #[link(name = "user32")]
 extern "system" {
     fn SetWindowDisplayAffinity(hwnd: isize, dw_affinity: u32) -> i32;
-    fn GetWindowLongW(hwnd: isize, n_index: i32) -> i32;
-    fn SetWindowLongW(hwnd: isize, n_index: i32, dw_new_long: i32) -> i32;
-    fn SetWindowPos(
-        hwnd: isize,
-        hwnd_insert_after: isize,
-        x: i32,
-        y: i32,
-        cx: i32,
-        cy: i32,
-        u_flags: u32,
-    ) -> i32;
     fn GetAncestor(hwnd: isize, ga_flags: u32) -> isize;
     fn ReleaseCapture() -> i32;
     fn SendMessageW(hwnd: isize, msg: u32, wparam: usize, lparam: isize) -> isize;
@@ -36,18 +25,6 @@ extern "system" {
     ) -> i32;
 }
 
-#[cfg(target_os = "windows")]
-const GWL_EXSTYLE: i32 = -20;
-#[cfg(target_os = "windows")]
-const WS_EX_LAYERED: i32 = 0x00080000;
-#[cfg(target_os = "windows")]
-const SWP_NOSIZE: u32 = 0x0001;
-#[cfg(target_os = "windows")]
-const SWP_NOMOVE: u32 = 0x0002;
-#[cfg(target_os = "windows")]
-const SWP_NOZORDER: u32 = 0x0004;
-#[cfg(target_os = "windows")]
-const SWP_FRAMECHANGED: u32 = 0x0020;
 #[cfg(target_os = "windows")]
 const GA_ROOT: u32 = 2;
 
@@ -92,20 +69,6 @@ fn apply_stealth_mode(hwnd: isize, enabled: bool) {
     };
 
     unsafe {
-        let ex_style = GetWindowLongW(top_hwnd, GWL_EXSTYLE);
-        if (ex_style & WS_EX_LAYERED) != 0 {
-            SetWindowLongW(top_hwnd, GWL_EXSTYLE, ex_style & !WS_EX_LAYERED);
-            SetWindowPos(
-                top_hwnd,
-                0,
-                0,
-                0,
-                0,
-                0,
-                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED,
-            );
-        }
-
         SetWindowDisplayAffinity(top_hwnd, flag);
     }
 }
@@ -310,6 +273,7 @@ fn start_local_command_server(app_handle: tauri::AppHandle) {
                     if let Some(win) = app_handle.get_window("main") {
                         if req.contains("GET /close") {
                             let _ = win.close();
+                            std::process::exit(0);
                         } else if req.contains("GET /minimize") {
                             let _ = win.minimize();
                         } else if req.contains("GET /maximize") {
@@ -378,6 +342,11 @@ fn main() {
             });
 
             Ok(())
+        })
+        .on_window_event(|event| {
+            if let tauri::WindowEvent::CloseRequested { .. } = event.event() {
+                std::process::exit(0);
+            }
         })
         .invoke_handler(tauri::generate_handler![
             set_stealth_mode,
