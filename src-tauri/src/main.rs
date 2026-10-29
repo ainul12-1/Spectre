@@ -23,8 +23,6 @@ extern "system" {
     fn GetAncestor(hwnd: isize, ga_flags: u32) -> isize;
     fn ReleaseCapture() -> i32;
     fn SendMessageW(hwnd: isize, msg: u32, wparam: usize, lparam: isize) -> isize;
-    fn SetWindowRgn(hwnd: isize, hrgn: isize, b_redraw: i32) -> i32;
-    fn GetWindowRect(hwnd: isize, lp_rect: *mut [i32; 4]) -> i32;
 }
 
 #[cfg(target_os = "windows")]
@@ -36,19 +34,6 @@ extern "system" {
         pv_attribute: *const std::ffi::c_void,
         cb_attribute: u32,
     ) -> i32;
-}
-
-#[cfg(target_os = "windows")]
-#[link(name = "gdi32")]
-extern "system" {
-    fn CreateRoundRectRgn(
-        x1: i32,
-        y1: i32,
-        x2: i32,
-        y2: i32,
-        w: i32,
-        h: i32,
-    ) -> isize;
 }
 
 #[cfg(target_os = "windows")]
@@ -78,7 +63,7 @@ fn apply_rounded_corners(hwnd: isize) {
     };
 
     unsafe {
-        // 1. Windows 11 DWM rounded corners (DWMWCP_ROUND)
+        // Windows 11 DWM native corner rounding (DWMWCP_ROUND = 2)
         let round_preference: u32 = 2;
         let _ = DwmSetWindowAttribute(
             top_hwnd,
@@ -86,19 +71,6 @@ fn apply_rounded_corners(hwnd: isize) {
             &round_preference as *const _ as *const std::ffi::c_void,
             4,
         );
-
-        // 2. Win32 GDI Rounded Region (22px curvature)
-        let mut rect = [0i32; 4];
-        if GetWindowRect(top_hwnd, rect.as_mut_ptr()) != 0 {
-            let width = rect[2] - rect[0];
-            let height = rect[3] - rect[1];
-            if width > 0 && height > 0 {
-                let rgn = CreateRoundRectRgn(0, 0, width + 1, height + 1, 22, 22);
-                if rgn != 0 {
-                    let _ = SetWindowRgn(top_hwnd, rgn, 1);
-                }
-            }
-        }
     }
 }
 
@@ -386,16 +358,6 @@ fn main() {
                     if let Ok(hwnd) = win_clone.hwnd() {
                         apply_rounded_corners(hwnd.0 as isize);
                         apply_stealth_mode(hwnd.0 as isize, true);
-                    }
-                }
-            });
-
-            let win_event = window.clone();
-            window.on_window_event(move |event| {
-                if let tauri::WindowEvent::Resized(_) = event {
-                    #[cfg(target_os = "windows")]
-                    if let Ok(hwnd) = win_event.hwnd() {
-                        apply_rounded_corners(hwnd.0 as isize);
                     }
                 }
             });
