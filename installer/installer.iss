@@ -2,7 +2,7 @@
 ; Generates Spectre-Windows-Setup.exe (Single executable installer & launcher)
 
 #define MyAppName "Spectre"
-#define MyAppVersion "1.0.10"
+#define MyAppVersion "1.0.11"
 #define MyAppPublisher "Ainul"
 #define MyAppURL "https://github.com/ainul12-1/Spectre"
 #define MyAppExeName "Spectre.exe"
@@ -26,12 +26,12 @@ ArchitecturesInstallIn64BitMode=x64
 WizardStyle=modern
 PrivilegesRequired=lowest
 SetupIconFile=..\src-tauri\icons\icon.ico
-VersionInfoVersion=1.0.10.0
+VersionInfoVersion=1.0.11.0
 VersionInfoCompany=Ainul
 VersionInfoDescription=Spectre Stealth Safari Browser
 VersionInfoCopyright=Copyright (C) 2024 Ainul
 VersionInfoProductName=Spectre
-VersionInfoProductVersion=1.0.10.0
+VersionInfoProductVersion=1.0.11.0
 UninstallDisplayName={#MyAppName}
 CloseApplications=yes
 

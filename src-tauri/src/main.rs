@@ -8,23 +8,6 @@ use tauri::{Manager, Window};
 #[cfg(target_os = "windows")]
 #[link(name = "user32")]
 extern "system" {
-    fn SetWindowDisplayAffinity(hwnd: isize, dw_affinity: u32) -> i32;
-    fn EnumChildWindows(
-        hwnd_parent: isize,
-        lp_enum_func: unsafe extern "system" fn(hwnd: isize, lparam: isize) -> i32,
-        lparam: isize,
-    ) -> i32;
-    fn GetWindowLongW(hwnd: isize, n_index: i32) -> i32;
-    fn SetWindowLongW(hwnd: isize, n_index: i32, dw_new_long: i32) -> i32;
-    fn SetWindowPos(
-        hwnd: isize,
-        hwnd_insert_after: isize,
-        x: i32,
-        y: i32,
-        cx: i32,
-        cy: i32,
-        u_flags: u32,
-    ) -> i32;
     fn GetAncestor(hwnd: isize, ga_flags: u32) -> isize;
     fn ReleaseCapture() -> i32;
     fn SendMessageW(hwnd: isize, msg: u32, wparam: usize, lparam: isize) -> isize;
@@ -41,18 +24,6 @@ extern "system" {
     ) -> i32;
 }
 
-#[cfg(target_os = "windows")]
-const GWL_EXSTYLE: i32 = -20;
-#[cfg(target_os = "windows")]
-const WS_EX_LAYERED: i32 = 0x00080000;
-#[cfg(target_os = "windows")]
-const SWP_NOSIZE: u32 = 0x0001;
-#[cfg(target_os = "windows")]
-const SWP_NOMOVE: u32 = 0x0002;
-#[cfg(target_os = "windows")]
-const SWP_NOZORDER: u32 = 0x0004;
-#[cfg(target_os = "windows")]
-const SWP_FRAMECHANGED: u32 = 0x0020;
 #[cfg(target_os = "windows")]
 const GA_ROOT: u32 = 2;
 
@@ -79,64 +50,12 @@ fn apply_rounded_corners(hwnd: isize) {
     }
 }
 
-#[cfg(target_os = "windows")]
-unsafe extern "system" fn enum_child_affinity(child: isize, lparam: isize) -> i32 {
-    let flag = lparam as u32;
-    SetWindowDisplayAffinity(child, flag);
-    1 // Continue enumeration
-}
-
-#[cfg(target_os = "windows")]
-fn apply_stealth_mode(hwnd: isize, enabled: bool) {
-    let top_hwnd = unsafe {
-        let root = GetAncestor(hwnd, GA_ROOT);
-        if root != 0 {
-            root
-        } else {
-            hwnd
-        }
-    };
-
-    let flag = if enabled {
-        0x00000011 // WDA_EXCLUDEFROMCAPTURE: Gaib di SS / OBS / Record, tetap tampil jelas di layar fisik!
-    } else {
-        0x00000000 // WDA_NONE: Normal
-    };
-
-    unsafe {
-        let ex_style = GetWindowLongW(top_hwnd, GWL_EXSTYLE);
-        if (ex_style & WS_EX_LAYERED) != 0 {
-            SetWindowLongW(top_hwnd, GWL_EXSTYLE, ex_style & !WS_EX_LAYERED);
-            SetWindowPos(
-                top_hwnd,
-                0,
-                0,
-                0,
-                0,
-                0,
-                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED,
-            );
-        }
-
-        // 1. Terapkan pada root window handle
-        SetWindowDisplayAffinity(top_hwnd, flag);
-
-        // 2. Terapkan rekursif ke SELURUH child HWND (WebView2 renderers & D3D surfaces)
-        EnumChildWindows(top_hwnd, enum_child_affinity, flag as isize);
-    }
-}
-
 static STEALTH_ENABLED: AtomicBool = AtomicBool::new(true);
 
 #[tauri::command]
 fn set_stealth_mode(window: Window, enabled: bool) -> Result<bool, String> {
     STEALTH_ENABLED.store(enabled, Ordering::SeqCst);
-    #[cfg(target_os = "windows")]
-    {
-        if let Ok(hwnd) = window.hwnd() {
-            apply_stealth_mode(hwnd.0 as isize, enabled);
-        }
-    }
+    let _ = window.set_content_protected(enabled);
     Ok(enabled)
 }
 
@@ -349,10 +268,7 @@ fn start_local_command_server(app_handle: tauri::AppHandle) {
                             let cur = STEALTH_ENABLED.load(Ordering::SeqCst);
                             let new_val = !cur;
                             STEALTH_ENABLED.store(new_val, Ordering::SeqCst);
-                            #[cfg(target_os = "windows")]
-                            if let Ok(hwnd) = win.hwnd() {
-                                apply_stealth_mode(hwnd.0 as isize, new_val);
-                            }
+                            let _ = win.set_content_protected(new_val);
                         } else if req.contains("GET /drag") {
                             #[cfg(target_os = "windows")]
                             if let Ok(hwnd) = win.hwnd() {
@@ -388,19 +304,20 @@ fn main() {
             .resizable(true)
             .decorations(false)
             .transparent(false)
+            .content_protected(true)
             .center()
             .initialization_script(INJECTED_SAFARI_HEADER_JS)
             .build()?;
 
             let win_clone = window.clone();
             std::thread::spawn(move || {
-                for delay in [300, 800, 1800] {
+                for delay in [300, 800] {
                     std::thread::sleep(std::time::Duration::from_millis(delay));
+                    let _ = win_clone.set_content_protected(true);
                     #[cfg(target_os = "windows")]
                     {
                         if let Ok(hwnd) = win_clone.hwnd() {
                             apply_rounded_corners(hwnd.0 as isize);
-                            apply_stealth_mode(hwnd.0 as isize, true);
                         }
                     }
                 }
