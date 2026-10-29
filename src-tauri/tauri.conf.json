@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "Spectre",
-    "version": "1.0.0"
+    "version": "1.0.3"
   },
   "tauri": {
     "allowlist": {
@@ -28,7 +28,7 @@
       "copyright": "Copyright © 2024 Ainul",
       "category": "Utility",
       "shortDescription": "Spectre Stealth Safari Browser",
-      "longDescription": "Spectre is a stealth Safari-style browser with cloth window physics and screen capture protection.",
+      "longDescription": "Spectre is a stealth Safari-style browser with screen capture protection.",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
@@ -43,17 +43,17 @@
       {
         "label": "main",
         "title": "Spectre",
-        "width": 1180,
-        "height": 780,
-        "minWidth": 520,
-        "minHeight": 400,
+        "width": 1200,
+        "height": 800,
+        "minWidth": 640,
+        "minHeight": 450,
         "resizable": true,
         "fullscreen": false,
         "decorations": false,
-        "transparent": true,
-        "alwaysOnTop": true,
+        "transparent": false,
+        "alwaysOnTop": false,
         "center": true,
-        "additionalBrowserArgs": "--autoplay-policy=no-user-gesture-required"
+        "additionalBrowserArgs": "--disable-web-security --autoplay-policy=no-user-gesture-required"
       }
     ]
   }

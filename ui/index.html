@@ -7,230 +7,117 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- SVG Filter untuk Efek Gelombang Kain (Cloth Ripple Deformation) -->
-  <svg class="svg-filters" aria-hidden="true">
-    <defs>
-      <filter id="cloth-wave-filter" x="-15%" y="-15%" width="130%" height="130%">
-        <feTurbulence
-          id="cloth-turbulence"
-          type="fractalNoise"
-          baseFrequency="0.012 0.018"
-          numOctaves="2"
-          seed="7"
-          result="noise"
-        />
-        <feDisplacementMap
-          id="cloth-displacement"
-          in="SourceGraphic"
-          in2="noise"
-          scale="0"
-          xChannelSelector="R"
-          yChannelSelector="G"
-        />
-      </filter>
-    </defs>
-  </svg>
-
-  <!-- Kanvas Transparan tempat Window Safari Melengkung seperti Kain -->
-  <div id="cloth-stage" class="cloth-stage">
-    <div id="safari-shell" class="safari-shell">
+  <div id="app" class="app-container">
+    
+    <!-- 1. Toolbar Safari macOS Asli (Header Atas) -->
+    <header id="toolbar" class="safari-toolbar">
       
-      <!-- Header / Unified Toolbar Ala Safari macOS -->
-      <header id="safari-header" class="safari-header">
-        <!-- Kiri: Traffic Lights (Bulat Merah, Kuning, Hijau) + Navigasi -->
-        <div class="header-left no-drag">
-          <div class="traffic-lights" title="Kontrol Window Safari">
-            <button id="btn-close" class="traffic-btn close" aria-label="Close">
-              <svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6" /></svg>
-            </button>
-            <button id="btn-minimize" class="traffic-btn minimize" aria-label="Minimize">
-              <svg viewBox="0 0 12 12"><path d="M2.5 6h7" /></svg>
-            </button>
-            <button id="btn-maximize" class="traffic-btn maximize" aria-label="Maximize">
-              <svg viewBox="0 0 12 12"><path d="M3 6h6M6 3v6" /></svg>
-            </button>
-          </div>
-
-          <div class="nav-buttons">
-            <button id="btn-back" class="icon-btn" title="Kembali (Back)">
-              <svg viewBox="0 0 20 20"><path d="M12.5 4.5L7 10l5.5 5.5" /></svg>
-            </button>
-            <button id="btn-forward" class="icon-btn" title="Maju (Forward)">
-              <svg viewBox="0 0 20 20"><path d="M7.5 4.5L13 10l-5.5 5.5" /></svg>
-            </button>
-            <button id="btn-home" class="icon-btn" title="Halaman Awal Spectre">
-              <svg viewBox="0 0 20 20"><path d="M3.5 9.5L10 4l6.5 5.5M5.5 8.5V15.5h9V8.5" /></svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Area Drag Tengah & Smart Address Bar ala Safari -->
-        <div class="header-center">
-          <form id="address-form" class="address-bar no-drag" autocomplete="off">
-            <span class="security-icon" title="Mode Siluman Spectre">
-              <svg viewBox="0 0 16 16">
-                <path d="M8 1.5l5 2.2v4.1c0 3.4-2.1 5.9-5 6.7-2.9-.8-5-3.3-5-6.7V3.7l5-2.2z" />
-              </svg>
-            </span>
-            <input
-              id="address-input"
-              type="text"
-              placeholder="Ketik alamat web atau cari di Google..."
-              spellcheck="false"
-            />
-            <button type="button" id="btn-reload" class="address-action" title="Muat Ulang (Reload)">
-              <svg viewBox="0 0 16 16">
-                <path d="M13.5 8a5.5 5.5 0 1 1-1.4-3.7M13.5 2.5v2.3h-2.3" />
-              </svg>
-            </button>
-          </form>
-        </div>
-
-        <!-- Kanan: Indikator Anti-SS, Pengaturan Kain & Opacity, Tambah Tab -->
-        <div class="header-right no-drag">
-          <button
-            id="btn-stealth"
-            class="stealth-pill active"
-            title="Klik untuk ON/OFF Anti-Screenshot & Anti-Screen Record"
-          >
-            <span class="stealth-dot"></span>
-            <span id="stealth-label">Anti-SS: ON</span>
+      <!-- Kiri: Traffic Lights (Bulat Merah, Kuning, Hijau) + Tombol Navigasi -->
+      <div class="toolbar-left">
+        <div class="traffic-lights">
+          <button id="btn-close" class="traffic-dot close" title="Tutup Window (Close)" aria-label="Close">
+            <svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6" /></svg>
           </button>
-
-          <button id="btn-wobble-test" class="icon-btn" title="Tes Goyangan Kain (Cloth Wave)">
-            <svg viewBox="0 0 20 20">
-              <path d="M2.5 10c2-3.5 4-3.5 6 0s4 3.5 6 0 2-3.5 3-1.5" />
-            </svg>
+          <button id="btn-minimize" class="traffic-dot minimize" title="Kecilkan (Minimize)" aria-label="Minimize">
+            <svg viewBox="0 0 12 12"><path d="M2.5 6h7" /></svg>
           </button>
-
-          <button id="btn-settings" class="icon-btn" title="Pengaturan Kelenturan Kain & Transparansi">
-            <svg viewBox="0 0 20 20">
-              <path d="M4 6h12M4 10h12M4 14h12" />
-              <circle cx="7" cy="6" r="1.8" />
-              <circle cx="13" cy="10" r="1.8" />
-              <circle cx="9" cy="14" r="1.8" />
-            </svg>
-          </button>
-
-          <button id="btn-new-tab" class="icon-btn" title="Tab Baru (Ctrl+T)">
-            <svg viewBox="0 0 20 20"><path d="M10 4.5v11M4.5 10h11" /></svg>
+          <button id="btn-maximize" class="traffic-dot maximize" title="Perbesar (Maximize)" aria-label="Maximize">
+            <svg viewBox="0 0 12 12"><path d="M3 6h6M6 3v6" /></svg>
           </button>
         </div>
-      </header>
 
-      <!-- Baris Multi-Tab Ala Safari -->
-      <div id="tab-bar" class="tab-bar">
-        <div id="tab-list" class="tab-list no-drag"></div>
-        <div class="tab-drag-spacer" title="Tahan & geser ke kiri/kanan untuk melihat efek lentur kain">
-          <span>Geser header ke kiri / kanan untuk efek kain lentur ✨</span>
+        <div class="nav-actions">
+          <button id="btn-back" class="btn-icon" title="Kembali">
+            <svg viewBox="0 0 20 20"><path d="M12.5 4.5L7 10l5.5 5.5" /></svg>
+          </button>
+          <button id="btn-forward" class="btn-icon" title="Maju">
+            <svg viewBox="0 0 20 20"><path d="M7.5 4.5L13 10l-5.5 5.5" /></svg>
+          </button>
+          <button id="btn-home" class="btn-icon" title="Halaman Awal">
+            <svg viewBox="0 0 20 20"><path d="M3.5 9.5L10 4l6.5 5.5M5.5 8.5V15.5h9V8.5" /></svg>
+          </button>
         </div>
       </div>
 
-      <!-- Popover Pengaturan Spectre (Opacity, Cloth Flexibility, Always on Top) -->
-      <div id="settings-popover" class="settings-popover hidden no-drag">
-        <div class="popover-title">⚡ Kontrol Siluman Spectre</div>
-        
-        <div class="setting-row">
-          <div class="setting-info">
-            <span class="setting-name">Transparansi Mata (Opacity)</span>
-            <span id="opacity-val" class="setting-badge">100%</span>
-          </div>
-          <input id="opacity-slider" type="range" min="25" max="100" value="100" />
-        </div>
-
-        <div class="setting-row">
-          <div class="setting-info">
-            <span class="setting-name">Kelenturan Kain (Cloth Physics)</span>
-            <span id="cloth-val" class="setting-badge">125%</span>
-          </div>
-          <input id="cloth-slider" type="range" min="0" max="200" value="125" />
-        </div>
-
-        <div class="setting-row toggle-row">
-          <span class="setting-name">📌 Selalu di Paling Atas (Always on Top)</span>
-          <input id="chk-always-on-top" type="checkbox" checked />
-        </div>
-
-        <div class="popover-note">
-          💡 Saat <b>Anti-SS: ON</b>, aplikasi ini tetap terlihat oleh mata kamu, tapi <b>100% tembus pandang (transparan)</b> di hasil Screenshot, OBS, Zoom, Discord, & GMeet.
-        </div>
+      <!-- Tengah: Address Bar Safari -->
+      <div class="toolbar-center">
+        <form id="address-form" class="safari-address-bar" autocomplete="off">
+          <span class="lock-badge">
+            <svg viewBox="0 0 16 16">
+              <path d="M8 1.5l5 2.2v4.1c0 3.4-2.1 5.9-5 6.7-2.9-.8-5-3.3-5-6.7V3.7l5-2.2z" />
+            </svg>
+          </span>
+          <input
+            id="address-input"
+            type="text"
+            placeholder="Cari atau ketik nama situs web..."
+            spellcheck="false"
+          />
+          <button type="button" id="btn-reload" class="btn-icon" title="Muat Ulang">
+            <svg viewBox="0 0 16 16">
+              <path d="M13.5 8a5.5 5.5 0 1 1-1.4-3.7M13.5 2.5v2.3h-2.3" />
+            </svg>
+          </button>
+        </form>
       </div>
 
-      <!-- Area Konten Browser (Start Page + Multi-Tab Iframes) -->
-      <main id="viewport-area" class="viewport-area">
-        <!-- Start Page Default Spectre -->
-        <div id="start-page" class="start-page">
-          <div class="start-hero">
-            <div class="spectre-logo-orb"></div>
-            <h1>Spectre</h1>
-            <p class="subtitle">
-              Stealth Safari Browser • Tembus Pandang Saat di-SS / Record • Fisika Kain Lentur
-            </p>
+      <!-- Kanan: Tombol Anti-SS & Tambah Tab -->
+      <div class="toolbar-right">
+        <button id="btn-stealth" class="stealth-status-badge" title="Klik untuk mengaktifkan/mematikan Anti-Screenshot">
+          <span class="dot"></span>
+          <span id="stealth-text">Anti-SS: ON</span>
+        </button>
 
-            <form id="hero-search-form" class="hero-search">
-              <input
-                id="hero-search-input"
-                type="text"
-                placeholder="Cari di Google atau masukkan URL website..."
-                autocomplete="off"
-              />
-              <button type="submit">Buka</button>
-            </form>
+        <button id="btn-new-tab" class="btn-icon" title="Tab Baru (Ctrl+T)">
+          <svg viewBox="0 0 20 20"><path d="M10 4.5v11M4.5 10h11" /></svg>
+        </button>
+      </div>
+    </header>
 
-            <div class="quick-links">
-              <button class="quick-card" data-url="https://www.google.com">
-                <span class="q-icon">🔍</span>
-                <span class="q-title">Google</span>
-              </button>
-              <button class="quick-card" data-url="https://duckduckgo.com">
-                <span class="q-icon">🦆</span>
-                <span class="q-title">DuckDuckGo</span>
-              </button>
-              <button class="quick-card" data-url="https://en.wikipedia.org">
-                <span class="q-icon">📚</span>
-                <span class="q-title">Wikipedia</span>
-              </button>
-              <button class="quick-card" data-url="https://www.youtube.com">
-                <span class="q-icon">▶️</span>
-                <span class="q-title">YouTube</span>
-              </button>
-              <button class="quick-card" data-url="https://github.com">
-                <span class="q-icon">🐙</span>
-                <span class="q-title">GitHub</span>
-              </button>
-              <button class="quick-card" data-url="https://www.bing.com">
-                <span class="q-icon">💠</span>
-                <span class="q-title">Bing AI</span>
-              </button>
-            </div>
-
-            <div class="status-cards">
-              <div class="status-card">
-                <div class="sc-header">🛡️ Mode Anti-Tangkap Layar</div>
-                <p>
-                  Menggunakan Win32 <code>WDA_EXCLUDEFROMCAPTURE</code>. Coba tekan <b>PrintScreen</b>, <b>Win+Shift+S</b>, atau rekam via <b>OBS/Zoom</b> — window ini tidak akan ikut terekam (tembus pandang ke aplikasi di belakangnya).
-                </p>
-              </div>
-              <div class="status-card">
-                <div class="sc-header">🌊 Efek Kain Lentur (Cloth Physics)</div>
-                <p>
-                  Tahan dan gerakkan bagian atas (Header Safari) ke <b>kanan & kiri</b>. Window akan melengkung, miring, dan membal lentur mengikuti kecepatan tarikan tanganmu.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Container untuk Iframe Tab Aktif -->
-        <div id="iframes-container" class="iframes-container"></div>
-
-        <!-- Pelindung Drag (Aktif hanya saat window sedang di-drag agar kursor tidak nyangkut di dalam iframe) -->
-        <div id="drag-shield" class="drag-shield hidden"></div>
-      </main>
-
-      <!-- Handle Resize di Pojok Kanan Bawah -->
-      <div id="resize-handle" class="resize-handle no-drag" title="Tarik untuk mengubah ukuran window"></div>
+    <!-- 2. Baris Multi-Tab Safari -->
+    <div id="tab-bar" class="safari-tab-bar">
+      <div id="tab-list" class="tab-list"></div>
     </div>
+
+    <!-- 3. Viewport (Area Isi Web / Start Page) -->
+    <main id="viewport" class="viewport-content">
+      <!-- Start Page -->
+      <div id="start-page" class="start-page">
+        <div class="start-card">
+          <div class="start-logo">👻</div>
+          <h1>Spectre Browser</h1>
+          <p>Browser siluman Safari: Tampil normal di layarmu, tembus pandang di hasil Screenshot / Record</p>
+
+          <form id="hero-search-form" class="start-search-box">
+            <input id="hero-search-input" type="text" placeholder="Ketik kata kunci pencarian atau URL..." />
+            <button type="submit">Buka</button>
+          </form>
+
+          <div class="quick-sites">
+            <button class="quick-site-btn" data-url="https://www.google.com">
+              <span class="icon">🔍</span>
+              <span class="label">Google</span>
+            </button>
+            <button class="quick-site-btn" data-url="https://github.com">
+              <span class="icon">🐙</span>
+              <span class="label">GitHub</span>
+            </button>
+            <button class="quick-site-btn" data-url="https://www.youtube.com">
+              <span class="icon">▶️</span>
+              <span class="label">YouTube</span>
+            </button>
+            <button class="quick-site-btn" data-url="https://duckduckgo.com">
+              <span class="icon">🦆</span>
+              <span class="label">DuckDuckGo</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Iframes Container -->
+      <div id="iframes-box" style="flex: 1; width: 100%; height: 100%; display: none;"></div>
+    </main>
+
   </div>
 
   <script src="app.js"></script>
