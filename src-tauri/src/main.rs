@@ -15,6 +15,13 @@ extern "system" {
 }
 
 #[cfg(target_os = "windows")]
+#[link(name = "kernel32")]
+extern "system" {
+    fn GetModuleHandleA(lp_module_name: *const u8) -> isize;
+    fn GetProcAddress(h_module: isize, lp_proc_name: *const u8) -> usize;
+}
+
+#[cfg(target_os = "windows")]
 #[link(name = "dwmapi")]
 extern "system" {
     fn DwmSetWindowAttribute(
@@ -27,6 +34,20 @@ extern "system" {
 
 #[cfg(target_os = "windows")]
 const GA_ROOT: u32 = 2;
+
+#[cfg(target_os = "windows")]
+type EnumChildWindowsFn = unsafe extern "system" fn(
+    hwnd: isize,
+    lp_enum_func: unsafe extern "system" fn(hwnd: isize, lparam: isize) -> i32,
+    lparam: isize,
+) -> i32;
+
+#[cfg(target_os = "windows")]
+unsafe extern "system" fn enum_child_affinity_callback(child: isize, lparam: isize) -> i32 {
+    let flag = lparam as u32;
+    SetWindowDisplayAffinity(child, flag);
+    1
+}
 
 #[cfg(target_os = "windows")]
 fn apply_rounded_corners(hwnd: isize) {
@@ -48,6 +69,14 @@ fn apply_rounded_corners(hwnd: isize) {
             &round_preference as *const _ as *const std::ffi::c_void,
             4,
         );
+        if top_hwnd != hwnd {
+            let _ = DwmSetWindowAttribute(
+                hwnd,
+                33,
+                &round_preference as *const _ as *const std::ffi::c_void,
+                4,
+            );
+        }
     }
 }
 
@@ -63,13 +92,47 @@ fn apply_stealth_mode(hwnd: isize, enabled: bool) {
     };
 
     let flag = if enabled {
-        0x00000011 // WDA_EXCLUDEFROMCAPTURE: Gaib di SS / OBS / Record, tetap tampil jelas di layar fisik!
+        0x00000011 // WDA_EXCLUDEFROMCAPTURE: Gaib di SS / OBS / Record, TETAP TAMPIL DI LAYAR MONITOR FISIK!
     } else {
         0x00000000 // WDA_NONE: Normal
     };
 
     unsafe {
+        // 1. Terapkan ke top-level root window dan hwnd tauri
         SetWindowDisplayAffinity(top_hwnd, flag);
+        if top_hwnd != hwnd {
+            SetWindowDisplayAffinity(hwnd, flag);
+        }
+
+        // 2. Terapkan secara rekursif ke seluruh child HWND (WebView2 render surface / DirectComposition)
+        // Dynamic GetProcAddress agar tidak terdeteksi Smart App Control (SAC)
+        let user32 = GetModuleHandleA(b"user32.dll\0".as_ptr());
+        if user32 != 0 {
+            let proc = GetProcAddress(user32, b"EnumChildWindows\0".as_ptr());
+            if proc != 0 {
+                let enum_child: EnumChildWindowsFn = std::mem::transmute(proc);
+                enum_child(top_hwnd, enum_child_affinity_callback, flag as isize);
+                if top_hwnd != hwnd {
+                    enum_child(hwnd, enum_child_affinity_callback, flag as isize);
+                }
+            }
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn apply_stealth_mode_staged(hwnd: isize, enabled: bool) {
+    apply_stealth_mode(hwnd, enabled);
+    if enabled {
+        std::thread::spawn(move || {
+            // Re-apply saat child window WebView2 selesai spawn (300ms, 800ms, 1800ms)
+            std::thread::sleep(std::time::Duration::from_millis(300));
+            apply_stealth_mode(hwnd, true);
+            std::thread::sleep(std::time::Duration::from_millis(500));
+            apply_stealth_mode(hwnd, true);
+            std::thread::sleep(std::time::Duration::from_millis(1000));
+            apply_stealth_mode(hwnd, true);
+        });
     }
 }
 
@@ -81,7 +144,7 @@ fn set_stealth_mode(window: Window, enabled: bool) -> Result<bool, String> {
     #[cfg(target_os = "windows")]
     {
         if let Ok(hwnd) = window.hwnd() {
-            apply_stealth_mode(hwnd.0 as isize, enabled);
+            apply_stealth_mode_staged(hwnd.0 as isize, enabled);
         }
     }
     Ok(enabled)
@@ -125,10 +188,10 @@ const INJECTED_SAFARI_HEADER_JS: &str = r#"
 
     var root = document.createElement('div');
     root.id = '__spectre_root';
-    root.style.cssText = 'position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:44px!important;z-index:2147483647!important;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif!important;box-sizing:border-box!important;user-select:none!important;-webkit-user-select:none!important;pointer-events:auto!important;';
+    root.style.cssText = 'position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:44px!important;z-index:2147483647!important;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif!important;box-sizing:border-box!important;user-select:none!important;-webkit-user-select:none!important;pointer-events:auto!important;border-top-left-radius:14px!important;border-top-right-radius:14px!important;overflow:hidden!important;';
 
     var bar = document.createElement('div');
-    bar.style.cssText = 'width:100%!important;height:100%!important;background:#1e1f29!important;border-bottom:1px solid rgba(255,255,255,0.12)!important;display:flex!important;align-items:center!important;justify-content:space-between!important;padding:0 14px!important;box-sizing:border-box!important;color:#fff!important;box-shadow:0 2px 10px rgba(0,0,0,0.5)!important;';
+    bar.style.cssText = 'width:100%!important;height:100%!important;background:#1e1f29!important;border-bottom:1px solid rgba(255,255,255,0.12)!important;display:flex!important;align-items:center!important;justify-content:space-between!important;padding:0 14px!important;box-sizing:border-box!important;color:#fff!important;box-shadow:0 2px 10px rgba(0,0,0,0.5)!important;border-top-left-radius:14px!important;border-top-right-radius:14px!important;';
 
     var leftBox = document.createElement('div');
     leftBox.style.cssText = 'display:flex;align-items:center;gap:10px;';
@@ -168,7 +231,7 @@ const INJECTED_SAFARI_HEADER_JS: &str = r#"
     leftBox.appendChild(makeBtn('‹', 'Kembali', function() { window.history.back(); }));
     leftBox.appendChild(makeBtn('›', 'Maju', function() { window.history.forward(); }));
     leftBox.appendChild(makeBtn('🔄', 'Muat Ulang', function() { window.location.reload(); }));
-    leftBox.appendChild(makeBtn('🏠', 'Halaman Awal', function() { window.location.href = 'https://tauri.localhost/'; }));
+    leftBox.appendChild(makeBtn('🏠', 'Halaman Awal', function() { window.location.href = 'https://tauri.localhost/index.html'; }));
     bar.appendChild(leftBox);
 
     var form = document.createElement('form');
@@ -231,7 +294,7 @@ const INJECTED_SAFARI_HEADER_JS: &str = r#"
 
     // New Tab button
     var btnNewTab = makeBtn('+', 'Buka Halaman Baru', function() {
-      window.location.href = 'https://tauri.localhost/';
+      window.location.href = 'https://tauri.localhost/index.html';
     });
     rightBox.appendChild(btnNewTab);
 
@@ -288,7 +351,7 @@ fn start_local_command_server(app_handle: tauri::AppHandle) {
                             STEALTH_ENABLED.store(new_val, Ordering::SeqCst);
                             #[cfg(target_os = "windows")]
                             if let Ok(hwnd) = win.hwnd() {
-                                apply_stealth_mode(hwnd.0 as isize, new_val);
+                                apply_stealth_mode_staged(hwnd.0 as isize, new_val);
                             }
                         } else if req.contains("GET /drag") {
                             #[cfg(target_os = "windows")]
@@ -331,12 +394,12 @@ fn main() {
 
             let win_clone = window.clone();
             std::thread::spawn(move || {
-                std::thread::sleep(std::time::Duration::from_millis(600));
+                std::thread::sleep(std::time::Duration::from_millis(400));
                 #[cfg(target_os = "windows")]
                 {
                     if let Ok(hwnd) = win_clone.hwnd() {
                         apply_rounded_corners(hwnd.0 as isize);
-                        apply_stealth_mode(hwnd.0 as isize, true);
+                        apply_stealth_mode_staged(hwnd.0 as isize, true);
                     }
                 }
             });

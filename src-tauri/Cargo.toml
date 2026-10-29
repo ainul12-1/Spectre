@@ -1,6 +1,6 @@
 [package]
 name = "spectre"
-version = "1.0.13"
+version = "1.0.14"
 description = "Spectre - Stealth Anti-Capture Safari Browser"
 authors = ["Ainul"]
 license = "MIT"

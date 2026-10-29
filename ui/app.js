@@ -126,13 +126,13 @@
 
   btnBack.addEventListener("click", () => window.history.back());
   btnForward.addEventListener("click", () => window.history.forward());
-  btnHome.addEventListener("click", () => window.location.href = "https://tauri.localhost/");
+  btnHome.addEventListener("click", () => window.location.href = "https://tauri.localhost/index.html");
   btnReload.addEventListener("click", () => window.location.reload());
 
   const btnNewTab = document.getElementById("btn-new-tab");
   if (btnNewTab) {
     btnNewTab.addEventListener("click", () => {
-      window.location.href = "https://tauri.localhost/";
+      window.location.href = "https://tauri.localhost/index.html";
     });
   }
 })();

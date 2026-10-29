@@ -1,6 +1,6 @@
 {
   "name": "spectre",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "Spectre - Stealth Safari Browser with Screen Capture Exclude",
   "private": true,
   "scripts": {
