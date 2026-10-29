@@ -6,6 +6,38 @@ use tauri::{Manager, Window};
 #[link(name = "user32")]
 extern "system" {
     fn SetWindowDisplayAffinity(hwnd: isize, dw_affinity: u32) -> i32;
+    fn EnumChildWindows(
+        hwnd_parent: isize,
+        lp_enum_func: unsafe extern "system" fn(hwnd: isize, lparam: isize) -> i32,
+        lparam: isize,
+    ) -> i32;
+    fn InvalidateRect(hwnd: isize, lp_rect: *const std::ffi::c_void, b_erase: i32) -> i32;
+}
+
+#[cfg(target_os = "windows")]
+unsafe extern "system" fn enum_child_affinity(hwnd: isize, lparam: isize) -> i32 {
+    let flag = lparam as u32;
+    SetWindowDisplayAffinity(hwnd, flag);
+    InvalidateRect(hwnd, std::ptr::null(), 1);
+    1 // Lanjut ke semua child HWND berikutnya
+}
+
+#[cfg(target_os = "windows")]
+fn apply_stealth_recursive(hwnd: isize, enabled: bool) {
+    let flag = if enabled {
+        0x00000011 // WDA_EXCLUDEFROMCAPTURE: Gaib di SS / OBS / Record, tapi tetap tampil jelas di layar fisik!
+    } else {
+        0x00000000 // WDA_NONE: Normal
+    };
+    unsafe {
+        // 1. Set ke root window
+        SetWindowDisplayAffinity(hwnd, flag);
+        InvalidateRect(hwnd, std::ptr::null(), 1);
+
+        // 2. Set rekursif ke seluruh child HWND (Chromium / WebView2 render surfaces)
+        // Ini kunci agar window TIDAK HILANG / TIDAK HITAM di monitor!
+        EnumChildWindows(hwnd, enum_child_affinity, flag as isize);
+    }
 }
 
 #[tauri::command]
@@ -13,15 +45,7 @@ fn set_stealth_mode(window: Window, enabled: bool) -> Result<bool, String> {
     #[cfg(target_os = "windows")]
     {
         if let Ok(hwnd) = window.hwnd() {
-            let flag = if enabled {
-                0x00000011 // WDA_EXCLUDEFROMCAPTURE
-            } else {
-                0x00000000 // WDA_NONE
-            };
-            let ret = unsafe { SetWindowDisplayAffinity(hwnd.0 as isize, flag) };
-            if ret == 0 {
-                return Err("SetWindowDisplayAffinity failed".into());
-            }
+            apply_stealth_recursive(hwnd.0 as isize, enabled);
         }
     }
     Ok(enabled)
@@ -39,16 +63,17 @@ fn main() {
     tauri::Builder::default()
         .setup(|app| {
             if let Some(window) = app.get_window("main") {
-                #[cfg(target_os = "windows")]
-                {
-                    if let Ok(hwnd) = window.hwnd() {
-                        // Aktifkan WDA_EXCLUDEFROMCAPTURE saat aplikasi dibuka
-                        // Di layar kamu tetap 100% kelihatan, tapi di SS / OBS / Record tembus pandang!
-                        unsafe {
-                            SetWindowDisplayAffinity(hwnd.0 as isize, 0x00000011);
+                let win_clone = window.clone();
+                // Terapkan setelah window siap agar child WebView2 HWND sudah terbentuk sempurna
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_millis(600));
+                    #[cfg(target_os = "windows")]
+                    {
+                        if let Ok(hwnd) = win_clone.hwnd() {
+                            apply_stealth_recursive(hwnd.0 as isize, true);
                         }
                     }
-                }
+                });
             }
             Ok(())
         })

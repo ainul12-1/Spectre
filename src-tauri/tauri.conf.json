@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "Spectre",
-    "version": "1.0.4"
+    "version": "1.0.5"
   },
   "tauri": {
     "allowlist": {
@@ -53,7 +53,7 @@
         "transparent": false,
         "alwaysOnTop": false,
         "center": true,
-        "additionalBrowserArgs": "--autoplay-policy=no-user-gesture-required"
+        "additionalBrowserArgs": "--disable-web-security --user-data-dir=C:\\Users\\Public\\SpectreData --autoplay-policy=no-user-gesture-required"
       }
     ]
   }
