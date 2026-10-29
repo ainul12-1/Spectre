@@ -1,10 +1,12 @@
 {
-  "name": "spectre-browser",
-  "version": "1.0.0",
-  "description": "Spectre — Stealth Anti-Capture Safari-Style Cloth Window Browser for Windows",
+  "name": "spectre",
+  "version": "1.0.6",
+  "description": "Spectre - Stealth Safari Browser with Screen Capture Exclude",
   "private": true,
   "scripts": {
-    "dev": "echo \"No frontend build step needed (static UI in ./ui)\"",
-    "build": "echo \"Static UI ready in ./ui\""
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.5.0"
   }
 }

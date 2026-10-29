@@ -9,7 +9,7 @@
 <body>
   <div id="app" class="app-container">
     
-    <!-- 1. Toolbar Safari macOS Asli (Header Atas) -->
+    <!-- Toolbar Safari macOS Header -->
     <header id="toolbar" class="safari-toolbar">
       
       <!-- Kiri: Traffic Lights (Bulat Merah, Kuning, Hijau) + Tombol Navigasi -->
@@ -61,27 +61,17 @@
         </form>
       </div>
 
-      <!-- Kanan: Tombol Anti-SS & Tambah Tab -->
+      <!-- Kanan: Tombol Anti-SS -->
       <div class="toolbar-right">
         <button id="btn-stealth" class="stealth-status-badge" title="Klik untuk mengaktifkan/mematikan Anti-Screenshot">
           <span class="dot"></span>
           <span id="stealth-text">Anti-SS: ON</span>
         </button>
-
-        <button id="btn-new-tab" class="btn-icon" title="Tab Baru (Ctrl+T)">
-          <svg viewBox="0 0 20 20"><path d="M10 4.5v11M4.5 10h11" /></svg>
-        </button>
       </div>
     </header>
 
-    <!-- 2. Baris Multi-Tab Safari -->
-    <div id="tab-bar" class="safari-tab-bar">
-      <div id="tab-list" class="tab-list"></div>
-    </div>
-
-    <!-- 3. Viewport (Area Isi Web / Start Page) -->
+    <!-- Viewport (Start Page) -->
     <main id="viewport" class="viewport-content">
-      <!-- Start Page -->
       <div id="start-page" class="start-page">
         <div class="start-card">
           <div class="start-logo">👻</div>
@@ -113,9 +103,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Iframes Container -->
-      <div id="iframes-box" style="flex: 1; width: 100%; height: 100%; display: none;"></div>
     </main>
 
   </div>
