@@ -274,24 +274,33 @@ fn main() {
             let handle = app.handle();
             start_local_command_server(handle);
 
-            if let Some(window) = app.get_window("main") {
-                let win_clone = window.clone();
-                std::thread::spawn(move || {
-                    std::thread::sleep(std::time::Duration::from_millis(600));
-                    #[cfg(target_os = "windows")]
-                    {
-                        if let Ok(hwnd) = win_clone.hwnd() {
-                            apply_stealth_mode(hwnd.0 as isize, true);
-                        }
+            let window = tauri::WindowBuilder::new(
+                app,
+                "main",
+                tauri::WindowUrl::App("index.html".into()),
+            )
+            .title("Spectre")
+            .inner_size(1200.0, 800.0)
+            .min_inner_size(640.0, 450.0)
+            .resizable(true)
+            .decorations(false)
+            .transparent(false)
+            .center()
+            .initialization_script(INJECTED_SAFARI_HEADER_JS)
+            .build()?;
+
+            let win_clone = window.clone();
+            std::thread::spawn(move || {
+                std::thread::sleep(std::time::Duration::from_millis(600));
+                #[cfg(target_os = "windows")]
+                {
+                    if let Ok(hwnd) = win_clone.hwnd() {
+                        apply_stealth_mode(hwnd.0 as isize, true);
                     }
-                });
-            }
+                }
+            });
+
             Ok(())
-        })
-        .on_page_load(|window, payload| {
-            if payload.event() == tauri::PageLoadEvent::Finished {
-                let _ = window.eval(INJECTED_SAFARI_HEADER_JS);
-            }
         })
         .invoke_handler(tauri::generate_handler![
             set_stealth_mode,
