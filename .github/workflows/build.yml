@@ -29,54 +29,47 @@ jobs:
       - name: Install Rust Stable
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Detect Project Directory
-        id: dir
-        shell: pwsh
-        run: |
-          if (Test-Path "./src-tauri/Cargo.toml") {
-            echo "APP_DIR=." >> $env:GITHUB_OUTPUT
-            echo "TAURI_DIR=./src-tauri" >> $env:GITHUB_OUTPUT
-          } elseif (Test-Path "./Spectre/src-tauri/Cargo.toml") {
-            echo "APP_DIR=./Spectre" >> $env:GITHUB_OUTPUT
-            echo "TAURI_DIR=./Spectre/src-tauri" >> $env:GITHUB_OUTPUT
-          } else {
-            Write-Error "Could not find src-tauri/Cargo.toml"
-            exit 1
-          }
-
       - name: Rust Cargo Cache
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: "${{ steps.dir.outputs.TAURI_DIR }} -> target"
+          workspaces: "src-tauri -> target"
 
-      - name: Build Spectre (.exe Portable & Installer) via Tauri CLI
-        shell: pwsh
-        working-directory: ${{ steps.dir.outputs.APP_DIR }}
-        run: |
-          npx --yes @tauri-apps/cli@1.6.3 build
-
-      - name: Prepare Portable .exe Package
+      - name: Build Spectre Release via Tauri CLI
         shell: pwsh
         run: |
-          $tauriDir = "${{ steps.dir.outputs.TAURI_DIR }}"
+          npx --yes @tauri-apps/cli@1.6.3 build --bundles none
+
+      - name: Package with Inno Setup (Single File Installer EXE)
+        shell: pwsh
+        run: |
+          Write-Host "Installing Inno Setup..." -ForegroundColor Yellow
+          choco install innosetup --no-progress -y
+
+          Write-Host "Compiling Inno Setup EXE..." -ForegroundColor Yellow
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\installer.iss
+
           New-Item -ItemType Directory -Force -Path "./dist-artifacts" | Out-Null
-          Copy-Item "$tauriDir/target/release/spectre.exe" "./dist-artifacts/Spectre-Portable.exe" -Force
-          if (Test-Path "$tauriDir/target/release/bundle/nsis/*.exe") {
-            Copy-Item "$tauriDir/target/release/bundle/nsis/*.exe" "./dist-artifacts/" -Force
+          
+          # Inno Setup 1-File EXE
+          if (Test-Path "installer\Spectre-Windows-Setup.exe") {
+            Copy-Item "installer\Spectre-Windows-Setup.exe" "./dist-artifacts/Spectre-Windows-Setup.exe" -Force
           }
-          if (Test-Path "$tauriDir/target/release/bundle/msi/*.msi") {
-            Copy-Item "$tauriDir/target/release/bundle/msi/*.msi" "./dist-artifacts/" -Force
+
+          # Portable single EXE
+          if (Test-Path "src-tauri\target\release\spectre.exe") {
+            Copy-Item "src-tauri\target\release\spectre.exe" "./dist-artifacts/Spectre-Portable.exe" -Force
           }
+
           Get-ChildItem "./dist-artifacts"
 
-      - name: Upload Spectre .exe to GitHub Actions Artifacts
+      - name: Upload Spectre .exe to GitHub Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Spectre-Windows-EXE
           path: ./dist-artifacts/*
           if-no-files-found: error
 
-      - name: Publish Automatic GitHub Release (Optional on main/tags)
+      - name: Publish Automatic GitHub Release
         if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
@@ -84,9 +77,9 @@ jobs:
           name: "Spectre Stealth Browser v1.0.${{ github.run_number }}"
           body: |
             ### 👻 Spectre — Stealth Anti-Capture Safari Browser (Windows)
-            - **Spectre-Portable.exe**: Langsung klik 2x untuk jalan (tanpa perlu install).
-            - **Installer (.exe / .msi)**: Installer resmi jika ingin dipasang di Start Menu.
-            - **Fitur**: Anti-Screenshot & Anti-Record (`WDA_EXCLUDEFROMCAPTURE`), UI Safari macOS (Traffic Lights + Animasi Close), & Efek Kain Lentur (Cloth Physics).
+            - **Spectre-Windows-Setup.exe**: Installer 1-file mandiri dengan Inno Setup (klik langsung pasang & jalan).
+            - **Spectre-Portable.exe**: 1 file portable langsung klik 2x.
+            - **Fitur**: Anti-Screenshot (`WDA_EXCLUDEFROMCAPTURE`), UI Safari macOS, Animasi Close, & Fisika Kain Lentur.
           files: ./dist-artifacts/*
           draft: false
           prerelease: false

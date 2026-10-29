@@ -1,10 +1,10 @@
 [package]
 name = "spectre"
 version = "1.0.0"
-description = "Spectre — Stealth Anti-Capture Safari Browser with Cloth Physics"
-authors = ["Spectre"]
+description = "Spectre - Stealth Anti-Capture Safari Browser with Cloth Physics"
+authors = ["Ainul"]
 license = "MIT"
-repository = ""
+repository = "https://github.com/ainul12-1/Spectre"
 edition = "2021"
 
 [build-dependencies]
@@ -20,8 +20,9 @@ default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
 
 [profile.release]
-panic = "abort"
 codegen-units = 1
-lto = true
-opt-level = "s"
-strip = true
+lto = "thin"
+opt-level = 3
+panic = "unwind"
+strip = false
+debug = false

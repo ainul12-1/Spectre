@@ -23,8 +23,12 @@
     },
     "bundle": {
       "active": true,
-      "targets": "all",
-      "identifier": "com.spectre.stealthbrowser",
+      "targets": ["nsis", "msi"],
+      "identifier": "com.ainul.spectre",
+      "copyright": "Copyright © 2024 Ainul",
+      "category": "Utility",
+      "shortDescription": "Spectre Stealth Safari Browser",
+      "longDescription": "Spectre is a stealth Safari-style browser with cloth window physics and screen capture protection.",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
@@ -49,7 +53,7 @@
         "transparent": true,
         "alwaysOnTop": true,
         "center": true,
-        "additionalBrowserArgs": "--disable-web-security --disable-features=IsolateOrigins,site-per-process,CrossSiteDocumentBlockingIfIsolating,CrossSiteDocumentBlockingAlways,msWebOOUI,msPdfOOUI,msSmartScreenProtection --disable-site-isolation-trials --autoplay-policy=no-user-gesture-required"
+        "additionalBrowserArgs": "--autoplay-policy=no-user-gesture-required"
       }
     ]
   }
